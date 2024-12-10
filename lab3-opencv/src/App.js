@@ -1,7 +1,6 @@
 /* global cv */
 
 import React, { useState } from 'react';
-import Histogram from './components/Histogram';
 import Contrast from './components/Contrast';
 import HistogramEqualization from './components/HistogramEqualization';
 import Sharpening from './components/Sharpening';
@@ -47,10 +46,6 @@ function App() {
                   }} 
                 />
               </div>
-            </div>
-            <div>
-              <h4 style={{ margin: '5px 0' }}>Histogram</h4>
-              <Histogram key={imageKey} srcImage={srcImage} />
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px' }}>
               <div>
