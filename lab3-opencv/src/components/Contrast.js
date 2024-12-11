@@ -14,30 +14,28 @@ const Contrast = ({ srcImage }) => {
       const src = cv.imread(imgElement);
       const dst = new cv.Mat();
 
-      // Преобразование изображения в оттенки серого
       cv.cvtColor(src, src, cv.COLOR_RGBA2GRAY, 0);
 
-      // Нахождение минимального и максимального значений яркости
+      if (src.type() !== cv.CV_8U) {
+        src.convertTo(src, cv.CV_8U);
+      }
+
       const minMax = cv.minMaxLoc(src);
       const f_min = minMax.minVal;
       const f_max = minMax.maxVal;
 
-      // Избегаем деления на ноль
       if (f_max === f_min) {
         cv.imshow(canvasRef.current, src);
         src.delete();
         return;
       }
 
-      // Линейное контрастирование
-      const alpha = 255.0 / (f_max - f_min); // Нормализация
-      const beta = -f_min * alpha; // Сдвиг
+      const alpha = 255.0 / (f_max - f_min);
+      const beta = -f_min * alpha;
       src.convertTo(dst, cv.CV_8U, alpha, beta);
 
-      // Вывод результата
       cv.imshow(canvasRef.current, dst);
 
-      // Освобождение ресурсов
       src.delete();
       dst.delete();
     };
