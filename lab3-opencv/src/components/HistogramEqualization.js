@@ -5,6 +5,7 @@ import React, { useRef } from 'react';
 const HistogramEqualization = ({ srcImage, method = 'rgb' }) => {
   const canvasRef = useRef(null);
 
+  // RGB
   const applyRGBEqualization = () => {
     if (!srcImage || !cv) return;
     const imgElement = new Image();
@@ -33,6 +34,7 @@ const HistogramEqualization = ({ srcImage, method = 'rgb' }) => {
     };
   };
 
+  // HSV
   const applyHSVEqualization = () => {
     if (!srcImage || !cv) return;
     const imgElement = new Image();
@@ -47,6 +49,7 @@ const HistogramEqualization = ({ srcImage, method = 'rgb' }) => {
       const hsvPlanes = new cv.MatVector();
       cv.split(hsv, hsvPlanes);
       
+      // только V
       cv.equalizeHist(hsvPlanes.get(2), hsvPlanes.get(2));
       
       cv.merge(hsvPlanes, hsv);

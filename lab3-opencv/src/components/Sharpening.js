@@ -14,7 +14,7 @@ const Sharpening = ({ srcImage }) => {
       const dst = new cv.Mat();
 
       const kernel = cv.Mat.ones(3, 3, cv.CV_32F);
-      kernel.data32F[4] = 9.0; // Усиливаем центр
+      kernel.data32F[4] = 9.0;
       kernel.data32F[0] = kernel.data32F[1] = kernel.data32F[2] = -1.0;
       kernel.data32F[3] = kernel.data32F[5] = kernel.data32F[6] = -1.0;
       kernel.data32F[7] = kernel.data32F[8] = -1.0;

@@ -14,30 +14,32 @@ const Contrast = ({ srcImage }) => {
       const src = cv.imread(imgElement);
       const dst = new cv.Mat();
 
-      cv.cvtColor(src, src, cv.COLOR_RGBA2GRAY, 0);
+      const channels = new cv.MatVector();
+      cv.split(src, channels);
 
-      if (src.type() !== cv.CV_8U) {
-        src.convertTo(src, cv.CV_8U);
+      for (let i = 0; i < 3; i++) {
+        const channel = channels.get(i);
+        const minMax = cv.minMaxLoc(channel);
+        const f_min = minMax.minVal;
+        const f_max = minMax.maxVal;
+
+        if (f_max === f_min) {
+          continue;
+        }
+
+        const alpha = 255.0 / (f_max - f_min);
+        const beta = -f_min * alpha;
+
+        channel.convertTo(channel, cv.CV_8U, alpha, beta);
       }
 
-      const minMax = cv.minMaxLoc(src);
-      const f_min = minMax.minVal;
-      const f_max = minMax.maxVal;
-
-      if (f_max === f_min) {
-        cv.imshow(canvasRef.current, src);
-        src.delete();
-        return;
-      }
-
-      const alpha = 255.0 / (f_max - f_min);
-      const beta = -f_min * alpha;
-      src.convertTo(dst, cv.CV_8U, alpha, beta);
+      cv.merge(channels, dst);
 
       cv.imshow(canvasRef.current, dst);
 
       src.delete();
       dst.delete();
+      channels.delete();
     };
   };
 
