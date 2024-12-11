@@ -7,33 +7,39 @@ const Contrast = ({ srcImage }) => {
 
   const applyContrast = () => {
     if (!srcImage || !cv) return;
+
     const imgElement = new Image();
     imgElement.src = srcImage;
     imgElement.onload = () => {
       const src = cv.imread(imgElement);
       const dst = new cv.Mat();
-      
-      const channels = new cv.MatVector();
-      cv.split(src, channels);
-      
-      for (let i = 0; i < 3; i++) {
-        const channel = channels.get(i);
-        const minMax = cv.minMaxLoc(channel);
-        const alpha = 255.0 / (minMax.maxVal - minMax.minVal);
-        const beta = -minMax.minVal * alpha;
-        channel.convertTo(channel, -1, alpha, beta);
+
+      // Преобразование изображения в оттенки серого
+      cv.cvtColor(src, src, cv.COLOR_RGBA2GRAY, 0);
+
+      // Нахождение минимального и максимального значений яркости
+      const minMax = cv.minMaxLoc(src);
+      const f_min = minMax.minVal;
+      const f_max = minMax.maxVal;
+
+      // Избегаем деления на ноль
+      if (f_max === f_min) {
+        cv.imshow(canvasRef.current, src);
+        src.delete();
+        return;
       }
-      
-      cv.merge(channels, dst);
-      
+
+      // Линейное контрастирование
+      const alpha = 255.0 / (f_max - f_min); // Нормализация
+      const beta = -f_min * alpha; // Сдвиг
+      src.convertTo(dst, cv.CV_8U, alpha, beta);
+
+      // Вывод результата
       cv.imshow(canvasRef.current, dst);
-      
+
+      // Освобождение ресурсов
       src.delete();
       dst.delete();
-      for (let i = 0; i < 3; i++) {
-        channels.get(i).delete();
-      }
-      channels.delete();
     };
   };
 
