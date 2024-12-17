@@ -1,82 +1,77 @@
 /* global cv */
 
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
+import Histogram from './Histogram';
 
-const HistogramEqualization = ({ srcImage, method = 'rgb' }) => {
+const HistogramEqualization = ({ srcImage, method }) => {
   const canvasRef = useRef(null);
+  const [processedImageData, setProcessedImageData] = useState(null);
 
-  // RGB
-  const applyRGBEqualization = () => {
+  const applyHistogramEqualization = () => {
     if (!srcImage || !cv) return;
+  
     const imgElement = new Image();
     imgElement.src = srcImage;
     imgElement.onload = () => {
       const src = cv.imread(imgElement);
-      const dst = new cv.Mat();
-      const rgbPlanes = new cv.MatVector();
-      
-      cv.split(src, rgbPlanes);
-      
-      for (let i = 0; i < 3; i++) {
-        cv.equalizeHist(rgbPlanes.get(i), rgbPlanes.get(i));
+      let dst = new cv.Mat();
+  
+      if (method === 'rgb') {
+        const channels = new cv.MatVector();
+        cv.split(src, channels);
+  
+        for (let i = 0; i < 3; i++) {
+          cv.equalizeHist(channels.get(i), channels.get(i));
+        }
+  
+        cv.merge(channels, dst);
+        channels.delete();
+      } else if (method === 'hsv') {
+        cv.cvtColor(src, dst, cv.COLOR_RGBA2RGB);
+        cv.cvtColor(dst, dst, cv.COLOR_RGB2HSV);
+  
+        const channels = new cv.MatVector();
+        cv.split(dst, channels);
+  
+        cv.equalizeHist(channels.get(2), channels.get(2)); // Equalize V channel
+        cv.merge(channels, dst);
+  
+        cv.cvtColor(dst, dst, cv.COLOR_HSV2RGB);
+        cv.cvtColor(dst, dst, cv.COLOR_RGB2RGBA); // Fix for ImageData
+        channels.delete();
       }
-      
-      cv.merge(rgbPlanes, dst);
-      
+  
       cv.imshow(canvasRef.current, dst);
-      
+  
+      const imageData = new ImageData(
+        new Uint8ClampedArray(dst.data),
+        dst.cols,
+        dst.rows
+      );
+      setProcessedImageData(imageData);
+  
       src.delete();
       dst.delete();
-      for (let i = 0; i < 3; i++) {
-        rgbPlanes.get(i).delete();
-      }
-      rgbPlanes.delete();
     };
-  };
-
-  // HSV
-  const applyHSVEqualization = () => {
-    if (!srcImage || !cv) return;
-    const imgElement = new Image();
-    imgElement.src = srcImage;
-    imgElement.onload = () => {
-      const src = cv.imread(imgElement);
-      const dst = new cv.Mat();
-      
-      const hsv = new cv.Mat();
-      cv.cvtColor(src, hsv, cv.COLOR_BGR2HSV);
-      
-      const hsvPlanes = new cv.MatVector();
-      cv.split(hsv, hsvPlanes);
-      
-      // только V
-      cv.equalizeHist(hsvPlanes.get(2), hsvPlanes.get(2));
-      
-      cv.merge(hsvPlanes, hsv);
-      
-      cv.cvtColor(hsv, dst, cv.COLOR_HSV2BGR);
-      
-      cv.imshow(canvasRef.current, dst);
-      
-      src.delete();
-      dst.delete();
-      hsv.delete();
-      for (let i = 0; i < 3; i++) {
-        hsvPlanes.get(i).delete();
-      }
-      hsvPlanes.delete();
-    };
-  };
+  };  
 
   return (
     <div style={{ margin: '10px 0' }}>
-      <button 
-        onClick={method === 'rgb' ? applyRGBEqualization : applyHSVEqualization} 
-        style={{ marginBottom: '5px' }}
-      >
-        {method === 'rgb' ? 'Apply RGB Equalization' : 'Apply HSV Equalization'}
+      <button onClick={applyHistogramEqualization} style={{ marginBottom: '5px' }}>
+        Apply {method.toUpperCase()} Equalization
       </button>
-      <canvas ref={canvasRef} style={{ maxWidth: '100%' }} />
+      <div style={{ display: 'flex', gap: '10px', alignItems: 'start' }}>
+      <canvas
+          ref={canvasRef}
+          style={{
+            maxWidth: '800px',
+            maxHeight: '400px',
+            width: 'auto',
+            height: 'auto'
+          }}
+        />
+        {processedImageData && <Histogram imageData={processedImageData} />}
+      </div>
     </div>
   );
 };

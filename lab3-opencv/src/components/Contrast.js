@@ -1,9 +1,11 @@
 /* global cv */
 
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
+import Histogram from './Histogram';
 
 const Contrast = ({ srcImage }) => {
   const canvasRef = useRef(null);
+  const [processedImageData, setProcessedImageData] = useState(null);
 
   const applyContrast = () => {
     if (!srcImage || !cv) return;
@@ -34,8 +36,16 @@ const Contrast = ({ srcImage }) => {
       }
 
       cv.merge(channels, dst);
-
+      
       cv.imshow(canvasRef.current, dst);
+
+      // Получаем данные изображения для гистограммы
+      const imageData = new ImageData(
+        new Uint8ClampedArray(dst.data),
+        dst.cols,
+        dst.rows
+      );
+      setProcessedImageData(imageData);
 
       src.delete();
       dst.delete();
@@ -46,7 +56,20 @@ const Contrast = ({ srcImage }) => {
   return (
     <div style={{ margin: '10px 0' }}>
       <button onClick={applyContrast} style={{ marginBottom: '5px' }}>Apply Linear Contrast</button>
-      <canvas ref={canvasRef} style={{ maxWidth: '100%' }} />
+      <div style={{ display: 'flex', gap: '10px', alignItems: 'start' }}>
+      <canvas
+          ref={canvasRef}
+          style={{
+            maxWidth: '800px',
+            maxHeight: '400px',
+            width: 'auto',
+            height: 'auto'
+          }}
+        />
+        {processedImageData && (
+          <Histogram imageData={processedImageData} />
+        )}
+      </div>
     </div>
   );
 };
